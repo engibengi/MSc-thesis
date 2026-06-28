@@ -1,0 +1,3 @@
+[submodule "riscv-docker"]
+	path = riscv-docker
+	url = https://github.com/engibengi/riscv-paper-experiments
