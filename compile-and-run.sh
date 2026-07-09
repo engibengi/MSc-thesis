@@ -4,7 +4,7 @@ set -e
 
 if [ $# -ne 3 ];
 then 
-	echo "ERROR: wrong amount of parameters, the call syntax for this script is: ./compile.sh main.c kernel.mlir compiled.elf" 1>&2
+	echo "ERROR: wrong amount of parameters, the call syntax for this script is: ./compile-and-run.sh main.c kernel.mlir compiled.elf" 1>&2
 	exit 1
 fi
 
