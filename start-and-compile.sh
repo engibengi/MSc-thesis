@@ -3,7 +3,7 @@
 # Check that we are given the right amount of parameters
 if [ $# -ne 4 -a $# -ne 5 ];
 then 
-	echo "ERROR: wrong amount of parameters, the call syntax for this script is:\n{...}/start-and-run.sh {...}/riscv-paper-experiments main.c [data.h] kernel.mlir main.elf" 1>&2
+	echo "ERROR: wrong amount of parameters, the call syntax for this script is:\n{...}/start-and-run.sh {...}/riscv-docker main.c [data.h] kernel.mlir main.elf" 1>&2
 	exit 1
 fi
 

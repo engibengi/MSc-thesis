@@ -2,7 +2,7 @@
 
 if [ $# -ne 1 ];
 then 
-	echo "ERROR: wrong amount of parameters, the call syntax for this script is: {...}/start-vm.sh {...}/riscv-paper-experiments" 1>&2
+	echo "ERROR: wrong amount of parameters, the call syntax for this script is: {...}/start-env.sh {...}/riscv-docker" 1>&2
 	exit 1
 fi
 
