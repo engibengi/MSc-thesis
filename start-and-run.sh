@@ -112,4 +112,4 @@ then
 fi
 
 # Start the vm and run the compilation script
-docker run --rm -ti --volume $REPO:/src ghcr.io/opencompl/snitch-toolchain:latest /bin/bash -c "cd /src; ./compile-and-run.sh $MAINC $KERNELMLIR $COMPILED"
+docker run --rm -ti --volume $REPO:/src ghcr.io/opencompl/snitch-toolchain:7.0.0 /bin/bash -c "cd /src; ./compile-and-run.sh $MAINC $KERNELMLIR $COMPILED"
