@@ -40,4 +40,4 @@ cp ./compile-and-run.sh $REPO
 cp ./compile.sh $REPO
 cp ./run.sh $REPO
 
-docker run --rm -ti --volume $REPO:/src ghcr.io/opencompl/snitch-toolchain:7.0.0 /bin/bash -c "cd /src; exec bash"
+docker run --rm -ti --volume $REPO:/src ghcr.io/opencompl/snitch-toolchain:4.0.0 /bin/bash -c "cd /src; exec bash"
