@@ -1,4 +1,4 @@
-#define EL 16
+#define EL 48
 
 #define C_A  1
 #define C_C  0
@@ -7,9 +7,9 @@
 #include <snrt.h>
 #include <math.h>
 // Has matrices activations, weights, bias, and outputs
-#include "data_f16.h"
+#include "mac_f16.h"
 
-extern "C" _Float16* kernelprod(_Float16 *A, _Float16 *B, _Float16 *C);
+extern "C" _Float16* mac(_Float16 *A, _Float16 *B, _Float16 *C);
 
 
 void print(int core, char* mess) {
@@ -52,15 +52,11 @@ hb1:
   {
     snrt_fpu_fence();
     uint32_t start_cycle_acc = snrt_mcycle();
-    kernelprod(local_A, local_B, local_C);
+    mac(local_A, local_B, local_C);
     snrt_fpu_fence();
     uint32_t cycles_duration = snrt_mcycle() - start_cycle_acc;
     print(this_core, "Accelerated kernel computed");
     printf("Accelerated kernel computation cycles: %u\n", cycles_duration); 
-    //for(int i=0; i < EL*EL; ++i) {
-    //  if(i%EL == 0) printf("\n");
-    //  printf("%f,", (double)local_C[i]);
-    //}
   }
 
 
@@ -71,10 +67,8 @@ hb1:
     for(int a = 0; a < EL; ++a) { 
       for (int oc = 0; oc < EL; ++oc) {
         for (int ic = 0; ic < EL; ++ic) {
-	  //printf("ld={%.2f}, la={%.2f}, lb={%.2f};  ", (double)local_D[a*EL + oc], (double)local_A[a*EL+ic], (double)local_B[oc*EL+ic]);
 	  local_D[ a * EL + oc] += local_A[a * EL + ic] * local_B[oc * EL + ic];
 	}
-	//printf("\n\n");
       }
     }
     snrt_fpu_fence();
@@ -90,12 +84,12 @@ hb2:
   print(this_core, "Correctness check");
   // Correctness check
   for (int i = 0; i < EL * EL; i++) {
-    _Float16 d = fabs(local_C[i] - local_D[i]);
+    double d = fabs(local_C[i] - local_D[i]);
     if (d > 1E-2)  // Make sure to take into account NaNs (e.g.: happy path)
     {
       print(this_core, "BAD CODE EXIT!");
       printf("I = %d\n", i);
-      printf("d::%f\nl_C[i]::%f\nl_D[i]::%f\n", (double)d, (double)local_C[i], (double)local_D[i]);
+      printf("d::%f\nl_C[i]::%f\nl_D[i]::%f\n", d, local_C[i], local_D[i]);
       snrt_cluster_hw_barrier();
       return 1+i;
     }

@@ -1,4 +1,6 @@
-#define EL 16
+#define I 32
+#define J 64
+#define K 64
 
 #define C_A  1
 #define C_C  0
@@ -7,9 +9,9 @@
 #include <snrt.h>
 #include <math.h>
 // Has matrices activations, weights, bias, and outputs
-#include "data_f64.h"
+#include "mac3_f32.h"
 
-extern "C" double* kernelprod(double *A, double *B, double *C);
+extern "C" float* mac(float *A, float *B, float *C);
 
 
 void print(int core, char* mess) {
@@ -21,12 +23,11 @@ void print(int core, char* mess) {
 
 int main() {
   int this_core = snrt_cluster_core_idx();
-  double dk = 0.32;
 
-  double *local_A = (double *)snrt_l1_next();
-  double *local_B = local_A + EL * EL;
-  double *local_C = local_B + EL * EL;
-  double *local_D = local_C + EL * EL;   
+  float *local_A = (float *)snrt_l1_next();
+  float *local_B = local_A + I * J;
+  float *local_C = local_B + K * J;
+  float *local_D = local_C + I * K;   
 
   if(this_core != C_D)
   {
@@ -35,10 +36,10 @@ int main() {
 
   // copy data in shared local memory
   if (snrt_is_dm_core()) {
-    snrt_dma_start_1d(local_A, (volatile void *)A, EL * EL * sizeof(double));
-    snrt_dma_start_1d(local_B, (volatile void *)B, EL * EL * sizeof(double));
-    snrt_dma_start_1d(local_C, (volatile void *)C, EL * EL * sizeof(double));
-    snrt_dma_start_1d(local_D, (volatile void *)D, EL * EL * sizeof(double));
+    snrt_dma_start_1d(local_A, (volatile void *)A, I * J * sizeof(float));
+    snrt_dma_start_1d(local_B, (volatile void *)B, K * J * sizeof(float));
+    snrt_dma_start_1d(local_C, (volatile void *)C, I * K * sizeof(float));
+    snrt_dma_start_1d(local_D, (volatile void *)D, I * K * sizeof(float));
     snrt_dma_wait_all();
   }
 
@@ -53,7 +54,7 @@ hb1:
   {
     snrt_fpu_fence();
     uint32_t start_cycle_acc = snrt_mcycle();
-    kernelprod(local_A, local_B, local_C);
+    mac(local_A, local_B, local_C);
     snrt_fpu_fence();
     uint32_t cycles_duration = snrt_mcycle() - start_cycle_acc;
     print(this_core, "Accelerated kernel computed");
@@ -65,10 +66,10 @@ hb1:
   {
     snrt_fpu_fence();
     uint32_t start_cycle_std = snrt_mcycle();
-    for(int a = 0; a < EL; ++a) { 
-      for (int oc = 0; oc < EL; ++oc) {
-        for (int ic = 0; ic < EL; ++ic) {
-	  local_D[ a * EL + oc] += local_A[a * EL + ic] * local_B[oc * EL + ic];
+    for(int a = 0; a < I; ++a) { 
+      for (int oc = 0; oc < K; ++oc) {
+        for (int ic = 0; ic < J; ++ic) {
+	  local_D[ a * K + oc] += local_A[a * J + ic] * local_B[oc * J + ic];
 	}
       }
     }
@@ -84,7 +85,7 @@ hb2:
   if(this_core != C_C) goto hb3;
   print(this_core, "Correctness check");
   // Correctness check
-  for (int i = 0; i < EL * EL; i++) {
+  for (int i = 0; i < I * K; i++) {
     double d = fabs(local_C[i] - local_D[i]);
     if (d > 1E-2)  // Make sure to take into account NaNs (e.g.: happy path)
     {
